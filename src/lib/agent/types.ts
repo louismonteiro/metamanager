@@ -16,6 +16,9 @@ export type AgentAction =
   | "update_budget"
   | "export"
   | "preview"
+  /** Inventory: which objects exist, and in what state. */
+  | "list"
+  /** Performance: what the objects did. */
   | "report"
   | "unknown";
 
@@ -76,13 +79,56 @@ export interface AgentPlan {
   warnings: string[];
 }
 
+/** One campaign as the chat presents it. Every amount is already in EUR. */
+export interface CampaignSummary {
+  id: string;
+  name: string;
+  /** Raw Graph state, e.g. `ACTIVE`. */
+  status: string;
+  /** Portuguese label for {@link status}. */
+  statusLabel: string;
+  /** Delivery state, when it differs from the configured one. */
+  effectiveStatus?: string;
+  objective?: string;
+  dailyBudgetEur?: number;
+  lifetimeBudgetEur?: number;
+  /** Lifetime spend, when the insights call succeeded. */
+  spendEur?: number;
+}
+
+/**
+ * Outcome of answering a listing request against the Meta API.
+ *
+ * A discriminated union rather than a throw: the chat has to answer even when
+ * the integration is unconfigured or the Graph call fails, and the reason is
+ * part of the answer.
+ */
+export type CampaignListing =
+  | {
+      status: "ok";
+      accountId: string;
+      accountName: string;
+      campaigns: CampaignSummary[];
+      /** Campaigns returned. More may exist — see {@link hasMore}. */
+      totalCount: number;
+      hasMore: boolean;
+      /** True when the spend column could not be read; budgets still apply. */
+      spendUnavailable: boolean;
+    }
+  | { status: "unconfigured"; reason: string }
+  | { status: "no_account"; reason: string }
+  | { status: "error"; message: string; code?: number };
+
 export interface AgentReply {
   message: ChatMessage;
   intent: ParsedIntent;
   plan: AgentPlan;
+  /** Present when the request was a listing the agent could execute. */
+  listing?: CampaignListing;
   /**
-   * `placeholder` while the LLM brain is not wired in: the plan is derived from
-   * deterministic parsing, not from a model, and nothing is executed.
+   * `placeholder` when the plan is derived from deterministic parsing and
+   * nothing ran; `meta-api` when the answer carries data actually read from the
+   * Graph API.
    */
-  engine: "placeholder";
+  engine: "placeholder" | "meta-api";
 }

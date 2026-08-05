@@ -12,9 +12,9 @@ export type SendMessageResult =
 /**
  * Server action the chat composer calls.
  *
- * The agent brain is a placeholder for this slice: it parses the request into a
- * structured intent and answers with the plan of Meta API calls it would run.
- * Nothing is executed against the Graph API.
+ * Reads run for real: a listing request is answered with the account's
+ * campaigns, read server-side so the Meta token never reaches the browser.
+ * Writes are still only planned, and nothing writes without a confirmation.
  */
 export async function sendMessage(input: {
   message: string;
@@ -27,5 +27,5 @@ export async function sendMessage(input: {
     return { ok: false, error: first?.message ?? "Pedido inválido" };
   }
 
-  return { ok: true, reply: respondToMessage(parsed.data.message) };
+  return { ok: true, reply: await respondToMessage(parsed.data.message) };
 }

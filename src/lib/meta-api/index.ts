@@ -63,3 +63,23 @@ export {
   type AdAccountBusiness,
   type ListAdAccountsOptions,
 } from "./resources/ad-accounts";
+
+export {
+  CAMPAIGN_FIELDS,
+  CAMPAIGN_SPEND_FIELDS,
+  campaignInsightsEdge,
+  campaignStatusLabel,
+  campaignsEdge,
+  indexSpendByCampaign,
+  listAllCampaigns,
+  listCampaignSpend,
+  listCampaigns,
+  majorUnitsToEur,
+  minorUnitsToEur,
+  toAccountPath,
+  type Campaign,
+  type CampaignSpendRow,
+  type CampaignStatus,
+  type ListCampaignSpendOptions,
+  type ListCampaignsOptions,
+} from "./resources/campaigns";

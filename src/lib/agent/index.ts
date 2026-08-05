@@ -1,4 +1,10 @@
 export { parseIntent } from "./intent";
+export {
+  CAMPAIGN_LISTING_LIMIT,
+  fetchCampaignListing,
+  toCampaignSummary,
+  type FetchCampaignListingOptions,
+} from "./listing";
 export { buildPlan } from "./plan";
 export {
   chatRequestSchema,
@@ -6,6 +12,7 @@ export {
   renderReply,
   respondToMessage,
   type ChatRequest,
+  type RespondOptions,
 } from "./respond";
 export type {
   AdObjectLevel,
@@ -15,6 +22,8 @@ export type {
   AudienceHint,
   BudgetCadence,
   BudgetHint,
+  CampaignListing,
+  CampaignSummary,
   ChatMessage,
   ChatRole,
   ParsedIntent,

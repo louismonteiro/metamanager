@@ -16,6 +16,65 @@ import type {
  * write in Portuguese.
  */
 
+/**
+ * The objects a listing can be asked about, as a regex source fragment.
+ *
+ * Shared by every listing pattern so "campanhas", "conjuntos de anúncios" and
+ * "ads" are recognised the same way whichever phrasing wraps them.
+ */
+const OBJECT_NOUN_SOURCE =
+  "(?:campanhas?|campaigns?|conjuntos?\\s+de\\s+an[úu]ncios?|ad\\s?sets?|adsets?|an[úu]ncios?|ads?|criativos?|creatives?|contas?|accounts?|leads?|formul[áa]rios?)";
+
+/**
+ * Gap between the trigger word and the object it refers to.
+ *
+ * Lazy, capped, and stopped by sentence punctuation, so "mostra-me as minhas
+ * campanhas" matches while "Mostra o CPA. E as campanhas?" does not bind the
+ * trigger of one sentence to the object of the next.
+ */
+const NEAR = "[^.?!;\\n]{0,32}?";
+
+function listPattern(trigger: string): RegExp {
+  return new RegExp(
+    `\\b(?:${trigger})\\b${NEAR}\\b${OBJECT_NOUN_SOURCE}\\b`,
+    "iu",
+  );
+}
+
+/**
+ * Generic listing requests: "que campanhas tenho criadas?", "mostra-me as
+ * minhas campanhas", "lista os ad sets", "quantos anúncios tenho".
+ *
+ * `qual` is deliberately absent from the interrogatives: "Qual campanha teve o
+ * CPA mais baixo?" singles one object out by a metric — that is reporting, not
+ * listing.
+ */
+const LIST_PATTERNS: readonly RegExp[] = [
+  // Interrogative + object: "que campanhas tenho", "quantas campanhas estão ativas".
+  listPattern("que|quais|quantas|quantos|what|which|how\\s+many"),
+  // Explicit listing verb + object: "lista as campanhas", "quero ver campanhas".
+  listPattern(
+    "lista|listar|listagem|lista-me|mostra|mostra-me|mostrar|mostre|apresenta|enumera|indica|diz-me|ver|v[êe]|consulta|consultar|list|show|display|view|see",
+  ),
+  // Possession or existence + object: "tenho campanhas activas?", "há campanhas".
+  listPattern("tenho|temos|tens|existem|existe|h[áa]"),
+  // Object + possession or state: "as minhas campanhas estão ativas?".
+  new RegExp(
+    `\\b${OBJECT_NOUN_SOURCE}\\b${NEAR}\\b(?:tenho|temos|tens|existem|criad[ao]s?|activ[ao]s?|ativ[ao]s?|est[ãa]o|est[áa])\\b`,
+    "iu",
+  ),
+];
+
+/**
+ * Signals that the question is about performance, not about inventory.
+ *
+ * When one of these appears the listing patterns stand down and the request
+ * falls through to `report`: "mostra o CPA das campanhas" asks for metrics even
+ * though it names an object and a listing verb.
+ */
+const REPORT_SIGNAL_PATTERN =
+  /\b(?:cpa|cpc|ctr|cpm|roas|impress[õo]es|impressions|cliques|clicks|convers[õo]es|conversions|desempenho|performance|m[ée]tricas|metrics|resultados|results|insights|alcance|reach|frequ[êe]ncia|gasto|gastos|gastou|spend)\b/iu;
+
 /** Ordered by precedence: a write always outranks the reporting it implies. */
 const ACTION_PATTERNS: ReadonlyArray<readonly [AgentAction, RegExp]> = [
   ["pause", /\b(?:pausa|pausar|pause|desativa|desativar|desliga|disable)\b/iu],
@@ -34,6 +93,7 @@ const ACTION_PATTERNS: ReadonlyArray<readonly [AgentAction, RegExp]> = [
   ],
   ["export", /\b(?:exporta|exportar|export|csv|download)\b/iu],
   ["preview", /\b(?:preview|prévia|previa|pré-visualiza|pre-visualiza)\b/iu],
+  ["list", new RegExp(LIST_PATTERNS.map((p) => p.source).join("|"), "iu")],
   [
     "report",
     /\b(?:qual|quais|quanto|quantos|mostra|mostrar|relatório|relatorio|analisa|analisar|compara|report|show|which|what|how much)\b|\b(?:cpa|cpc|ctr|cpm|roas)\b/iu,
@@ -65,7 +125,12 @@ const DAILY_PATTERN =
   /\/\s?dia\b|\bpor\s+dia\b|\bdi[áa]rio\b|\bdaily\b|\/\s?day\b/iu;
 
 function detectAction(text: string): AgentAction {
+  const asksForMetrics = REPORT_SIGNAL_PATTERN.test(text);
+
   for (const [action, pattern] of ACTION_PATTERNS) {
+    // A listing phrasing wrapped around a metric is a report: "mostra o CPA das
+    // campanhas" wants numbers, not the inventory.
+    if (action === "list" && asksForMetrics) continue;
     if (pattern.test(text)) return action;
   }
   return "unknown";

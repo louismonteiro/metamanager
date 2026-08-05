@@ -5,3 +5,5 @@ build/
 coverage/
 package-lock.json
 next-env.d.ts
+# Local, git-excluded agent settings — not the repo's to format.
+.claude/
