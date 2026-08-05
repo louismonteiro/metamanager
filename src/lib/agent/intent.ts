@@ -73,7 +73,7 @@ const LIST_PATTERNS: readonly RegExp[] = [
  * though it names an object and a listing verb.
  */
 const REPORT_SIGNAL_PATTERN =
-  /\b(?:cpa|cpc|ctr|cpm|roas|impress[õo]es|impressions|cliques|clicks|convers[õo]es|conversions|desempenho|performance|m[ée]tricas|metrics|resultados|results|insights|alcance|reach|frequ[êe]ncia|gasto|gastos|gastou|spend)\b/iu;
+  /\b(?:cpa|cpc|ctr|cpm|roas|impress[õo]es|impressions|cliques|clicks|convers[õo]es|conversions|desempenho|performance|m[ée]tricas|metrics|resultados|results|insights|alcance|reach|frequ[êe]ncia|gasto|gastos|gastei|gaste|gastamos|gastaram|gastava|investi|investimos|investiu|investiram|custou|custo|spend)\b/iu;
 
 /** Ordered by precedence: a write always outranks the reporting it implies. */
 const ACTION_PATTERNS: ReadonlyArray<readonly [AgentAction, RegExp]> = [

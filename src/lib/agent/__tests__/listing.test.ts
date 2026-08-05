@@ -225,6 +225,45 @@ describe("fetchCampaignListing", () => {
       expect(String(call[0])).not.toContain("test-token");
     }
   });
+
+  it("rejects an invalid account id with a Portuguese error message", async () => {
+    const fetchImpl = graphFetch([]);
+
+    const listing = await fetchCampaignListing(
+      ENV,
+      { fetchImpl },
+      { accountId: "invalid-account" },
+    );
+
+    expect(listing.status).toBe("error");
+    if (listing.status !== "error") return;
+    expect(listing.message).toContain("Formato de conta inválido");
+    expect(listing.message).toContain("act_");
+  });
+
+  it("accepts a valid account id with the act_ prefix", async () => {
+    const fetchImpl = graphFetch([CAMPAIGNS_OK, SPEND_OK]);
+
+    const listing = await fetchCampaignListing(
+      ENV,
+      { fetchImpl },
+      { accountId: "act_123456789" },
+    );
+
+    expect(listing.status).toBe("ok");
+  });
+
+  it("accepts a valid account id without the act_ prefix", async () => {
+    const fetchImpl = graphFetch([CAMPAIGNS_OK, SPEND_OK]);
+
+    const listing = await fetchCampaignListing(
+      ENV,
+      { fetchImpl },
+      { accountId: "987654321" },
+    );
+
+    expect(listing.status).toBe("ok");
+  });
 });
 
 describe("respondToMessage — campaign listing", () => {

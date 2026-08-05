@@ -109,6 +109,17 @@ describe("parseIntent — listing", () => {
     expect(parseIntent("Mostra o gasto da conta").action).toBe("report");
   });
 
+  it("recognises spending verb conjugations as report signals", () => {
+    expect(parseIntent("Quanto gastei nas campanhas?").action).toBe("report");
+    expect(parseIntent("Quanto gastamos este mês?").action).toBe("report");
+    expect(parseIntent("Quanto gastaram as campanhas?").action).toBe("report");
+    expect(parseIntent("Quanto gastava por dia?").action).toBe("report");
+    expect(parseIntent("Quanto investi nas campanhas?").action).toBe("report");
+    expect(parseIntent("Quanto investimos em julho?").action).toBe("report");
+    expect(parseIntent("Quanto custou a campanha?").action).toBe("report");
+    expect(parseIntent("Qual foi o custo total?").action).toBe("report");
+  });
+
   it("still lets a write outrank the listing it implies", () => {
     expect(parseIntent("Lista as campanhas e pausa as ativas").action).toBe(
       "pause",

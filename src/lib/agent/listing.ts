@@ -94,6 +94,27 @@ function describeFailure(cause: unknown): CampaignListing {
 }
 
 /**
+ * Validates the account id format.
+ *
+ * Accepts `act_<digits>` or just `<digits>`. Returns an error result with a
+ * Portuguese message explaining the expected format when the id is invalid.
+ */
+function validateAccountId(
+  accountId: string,
+): { ok: true } | { ok: false; error: string } {
+  const trimmed = accountId.trim();
+  const digitsOnly = trimmed.replace(/^act_/, "");
+  if (/^\d+$/.test(digitsOnly) && digitsOnly.length > 0) {
+    return { ok: true };
+  }
+  return {
+    ok: false,
+    error:
+      "Formato de conta inválido. O esperado é `act_<números>` ou apenas `<números>` (ex.: `act_123456789`).",
+  };
+}
+
+/**
  * Fetches the campaigns of the account the configured token reaches.
  *
  * `env` and `clientOptions` are injected the same way the health check takes
@@ -127,6 +148,11 @@ export async function fetchCampaignListing(
       }
       accountId = account.id;
       accountName = account.name ?? account.id;
+    } else {
+      const validation = validateAccountId(accountId);
+      if (!validation.ok) {
+        return { status: "error", message: validation.error };
+      }
     }
 
     const page = await listCampaigns(client, accountId, {
