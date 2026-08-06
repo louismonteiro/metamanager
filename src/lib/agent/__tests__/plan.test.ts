@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { parseIntent } from "../intent";
 import { buildPlan } from "../plan";
@@ -90,9 +90,50 @@ describe("buildPlan", () => {
   });
 });
 
+describe("buildPlan — listing", () => {
+  it("reads the campaigns edge of the account", () => {
+    const plan = planFor("Que campanhas tenho criadas?");
+    const listStep = plan.steps.find((step) =>
+      step.endpoint.includes("/campaigns"),
+    );
+
+    expect(plan.requiresConfirmation).toBe(false);
+    expect(listStep?.method).toBe("GET");
+    expect(listStep?.endpoint).toContain("status");
+    expect(listStep?.endpoint).toContain("daily_budget");
+    expect(plan.steps.every((step) => !step.dryRun)).toBe(true);
+  });
+
+  it("adds an independent insights call for campaign spend", () => {
+    const endpoints = planFor("Lista as minhas campanhas")
+      .steps.map((step) => step.endpoint)
+      .join(" ");
+
+    expect(endpoints).toContain("insights?level=campaign");
+  });
+
+  it("reads the ad sets edge when the request is about ad sets", () => {
+    const endpoints = planFor("Mostra-me os meus conjuntos de anúncios")
+      .steps.map((step) => step.endpoint)
+      .join(" ");
+
+    expect(endpoints).toContain("/adsets");
+    expect(endpoints).not.toContain("insights?level=campaign");
+  });
+
+  it("warns that only campaigns are read live", () => {
+    expect(planFor("Lista os meus anúncios").warnings.join(" ")).toContain(
+      "apenas ao nível de campanha",
+    );
+    expect(
+      planFor("Lista as minhas campanhas").warnings.join(" "),
+    ).not.toContain("apenas ao nível de campanha");
+  });
+});
+
 describe("respondToMessage", () => {
-  it("returns an assistant message with the intent and plan attached", () => {
-    const reply = respondToMessage(
+  it("returns an assistant message with the intent and plan attached", async () => {
+    const reply = await respondToMessage(
       "Cria uma campanha de leads com €50/dia para Lisboa e Porto, mulheres 25-45.",
     );
 
@@ -102,22 +143,33 @@ describe("respondToMessage", () => {
     expect(reply.plan.requiresConfirmation).toBe(true);
   });
 
-  it("restates the budget in euros and flags the write", () => {
-    const reply = respondToMessage("Cria uma campanha com €50/dia");
+  it("restates the budget in euros and flags the write", async () => {
+    const reply = await respondToMessage("Cria uma campanha com €50/dia");
 
     expect(reply.message.content).toContain("50");
     expect(reply.message.content).toContain("confirmação");
   });
 
-  it("says plainly that no LLM produced the plan", () => {
-    const reply = respondToMessage("Mostra o gasto da conta");
+  it("says plainly that no LLM produced the plan", async () => {
+    const reply = await respondToMessage("Mostra o gasto da conta");
     expect(reply.message.content).toContain("não ligado");
   });
 
-  it("gives each message a distinct id", () => {
-    const first = respondToMessage("Cria uma campanha");
-    const second = respondToMessage("Cria uma campanha");
+  it("gives each message a distinct id", async () => {
+    const first = await respondToMessage("Cria uma campanha");
+    const second = await respondToMessage("Cria uma campanha");
 
     expect(first.message.id).not.toBe(second.message.id);
+  });
+
+  it("does not touch the API for a request that is not a campaign listing", async () => {
+    const fetchListing = vi.fn();
+
+    const reply = await respondToMessage("Cria uma campanha", {
+      fetchListing,
+    });
+
+    expect(fetchListing).not.toHaveBeenCalled();
+    expect(reply.listing).toBeUndefined();
   });
 });

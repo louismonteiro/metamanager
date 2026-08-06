@@ -40,6 +40,6 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   return NextResponse.json({
     ok: true,
-    reply: respondToMessage(parsed.data.message),
+    reply: await respondToMessage(parsed.data.message),
   });
 }

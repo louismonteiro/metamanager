@@ -20,6 +20,15 @@ const LEVEL_LABEL: Record<AdObjectLevel, string> = {
   unknown: "objeto",
 };
 
+const LEVEL_PLURAL: Record<AdObjectLevel, string> = {
+  campaign: "campanhas",
+  adset: "ad sets",
+  ad: "anúncios",
+  account: "contas",
+  lead: "leads",
+  unknown: "objetos",
+};
+
 const LEVEL_ID: Record<AdObjectLevel, string> = {
   campaign: "{CAMPAIGN_ID}",
   adset: "{ADSET_ID}",
@@ -91,6 +100,7 @@ function planSteps(intent: ParsedIntent): StepDraft[] {
   const level = intent.level === "unknown" ? "campaign" : intent.level;
   const id = LEVEL_ID[level];
   const label = LEVEL_LABEL[level];
+  const plural = LEVEL_PLURAL[level];
 
   switch (intent.action) {
     case "create":
@@ -120,7 +130,7 @@ function planSteps(intent: ParsedIntent): StepDraft[] {
       const status = intent.action === "pause" ? "PAUSED" : "ACTIVE";
       return [
         {
-          summary: `Listar as ${label}s alvo e confirmar quais são afetadas`,
+          summary: `Listar as ${plural} alvo e confirmar quais são afetadas`,
           method: "GET",
           endpoint: `${ACCOUNT}/${LEVEL_EDGE[level]}?fields=id,name,status,effective_status`,
           dryRun: false,
@@ -174,6 +184,32 @@ function planSteps(intent: ParsedIntent): StepDraft[] {
         },
       ];
 
+    case "list": {
+      const steps: StepDraft[] = [
+        {
+          summary: `Listar as ${plural} da conta com estado e orçamento`,
+          method: "GET",
+          endpoint: `${ACCOUNT}/${LEVEL_EDGE[level]}?fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget`,
+          dryRun: false,
+          note: "Orçamentos vêm em cêntimos (menor unidade da moeda da conta).",
+        },
+      ];
+
+      // Spend is a second, independent call: insights are throttled apart from
+      // the object edges, so losing them costs the column, not the listing.
+      if (level === "campaign") {
+        steps.push({
+          summary: "Ler o gasto acumulado por campanha",
+          method: "GET",
+          endpoint: `${ACCOUNT}/insights?level=campaign&fields=campaign_id,spend&date_preset=maximum`,
+          dryRun: false,
+          note: "Falha aqui não invalida a listagem — apenas o gasto fica por apurar.",
+        });
+      }
+
+      return steps;
+    }
+
     case "report":
       return [
         {
@@ -209,6 +245,11 @@ function buildWarnings(intent: ParsedIntent): string[] {
   if (intent.level === "unknown" && intent.action !== "unknown") {
     warnings.push(
       "O nível do objeto (campanha, ad set ou anúncio) não ficou explícito — vou assumir campanha.",
+    );
+  }
+  if (intent.action === "list" && intent.level !== "campaign") {
+    warnings.push(
+      "A leitura em direto está ligada apenas ao nível de campanha — para os outros níveis proponho o plano de chamadas, sem o executar.",
     );
   }
   if (intent.targetingHints.length > 0) {

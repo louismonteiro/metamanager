@@ -63,6 +63,81 @@ describe("parseIntent — action", () => {
   });
 });
 
+describe("parseIntent — listing", () => {
+  it.each([
+    "Que campanhas tenho criadas?",
+    "que campanhas tenho",
+    "Quais campanhas tenho?",
+    "Que campanhas estão ativas?",
+    "Mostra-me as minhas campanhas",
+    "Lista as campanhas",
+    "ver campanhas",
+    "Quantas campanhas tenho?",
+    "Quero ver campanhas",
+    "Tenho campanhas a correr?",
+    "Consulta as campanhas da conta",
+    "Which campaigns do I have?",
+    "Show me my campaigns",
+  ])("reads %j as a campaign listing", (text) => {
+    const intent = parseIntent(text);
+
+    expect(intent.action).toBe("list");
+    expect(intent.level).toBe("campaign");
+    expect(intent.isWrite).toBe(false);
+    expect(intent.confidence).toBeGreaterThan(0.5);
+  });
+
+  it("reads a listing at ad set level", () => {
+    const intent = parseIntent("Mostra-me os meus conjuntos de anúncios");
+
+    expect(intent.action).toBe("list");
+    expect(intent.level).toBe("adset");
+  });
+
+  it("reads a listing at ad level", () => {
+    const intent = parseIntent("Que anúncios tenho a correr?");
+
+    expect(intent.action).toBe("list");
+    expect(intent.level).toBe("ad");
+  });
+
+  it("keeps a metric question as a report, not a listing", () => {
+    expect(parseIntent("Mostra o CPA das campanhas").action).toBe("report");
+    expect(parseIntent("Quais campanhas têm o CTR mais alto?").action).toBe(
+      "report",
+    );
+    expect(parseIntent("Mostra o gasto da conta").action).toBe("report");
+  });
+
+  it("recognises spending verb conjugations as report signals", () => {
+    expect(parseIntent("Quanto gastei nas campanhas?").action).toBe("report");
+    expect(parseIntent("Quanto gastamos este mês?").action).toBe("report");
+    expect(parseIntent("Quanto gastaram as campanhas?").action).toBe("report");
+    expect(parseIntent("Quanto gastava por dia?").action).toBe("report");
+    expect(parseIntent("Quanto investi nas campanhas?").action).toBe("report");
+    expect(parseIntent("Quanto investimos em julho?").action).toBe("report");
+    expect(parseIntent("Quanto custou a campanha?").action).toBe("report");
+    expect(parseIntent("Qual foi o custo total?").action).toBe("report");
+  });
+
+  it("still lets a write outrank the listing it implies", () => {
+    expect(parseIntent("Lista as campanhas e pausa as ativas").action).toBe(
+      "pause",
+    );
+    expect(
+      parseIntent("Mostra-me as campanhas que quero duplicar").action,
+    ).toBe("duplicate");
+    expect(
+      parseIntent("Cria uma campanha igual às campanhas que tenho").action,
+    ).toBe("create");
+  });
+
+  it("needs an object to read a listing: a bare verb stays a report", () => {
+    expect(parseIntent("mostra-me isso").action).not.toBe("list");
+    expect(parseIntent("bom dia").action).toBe("unknown");
+  });
+});
+
 describe("parseIntent — level", () => {
   it("prefers ad set over ad when both words appear", () => {
     expect(parseIntent("Pausa o conjunto de anúncios X").level).toBe("adset");

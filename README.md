@@ -5,7 +5,7 @@ Meta Ads creation and management platform.
 MetaManager is **AI-agent-first**: the user never operates the Meta Marketing
 API through forms or wizards. There are exactly two human-facing surfaces — a
 **chat** with an AI agent (the only place actions happen) and a **read-only
-dashboard**. See `docs/roadmap.md` for the product direction.
+dashboard**.
 
 ## Stack
 
@@ -67,7 +67,7 @@ src/
   components/     ui/ (shadcn base), chat/, dashboard/
   lib/
     meta-api/     typed Meta Marketing API v26.0 client
-    agent/        intent parsing and plan building
+    agent/        intent parsing, plan building and campaign listing
     dashboard/    read-model types and fixtures
 ```
 
@@ -81,20 +81,38 @@ exceptions — classified **by numeric code only**, because the human-readable
 descriptions change without notice.
 
 ```ts
-import { MetaApiClient, listAdAccounts } from "@/lib/meta-api";
+import { MetaApiClient, listAdAccounts, listCampaigns } from "@/lib/meta-api";
 
 const client = MetaApiClient.fromEnv();
-const page = await listAdAccounts(client, { limit: 25 });
+const accounts = await listAdAccounts(client, { limit: 25 });
+const campaigns = await listCampaigns(client, "act_123", { limit: 25 });
 ```
 
 Errors: `MetaAuthError`, `MetaRateLimitError`, `MetaValidationError`,
 `MetaTransportError`, `MetaConfigError`.
 
+Budgets (`daily_budget`, `lifetime_budget`) come back in the account currency's
+**minor units** — cents — while insights `spend` comes in **major units**. Use
+`minorUnitsToEur` and `majorUnitsToEur` rather than converting inline.
+
+## Reading campaigns from the chat
+
+Generic Portuguese listing questions — "Que campanhas tenho criadas?", "Lista as
+minhas campanhas", "Quantas campanhas tenho?" — parse to `action: "list"` and are
+answered with the account's **real** campaigns: name, state, budget, spend and
+total count. The Graph calls run server-side only, so the token never reaches the
+browser. Spend is read from a separate `insights` call, so losing it costs the
+column and not the listing.
+
+A phrasing that names a metric ("mostra o CPA das campanhas") stays a `report`:
+it asks for numbers, not for inventory.
+
 ## What this slice does not do
 
-The agent has no LLM behind it yet. `respondToMessage` parses the request into a
-structured intent and answers with the plan of API calls it _would_ run —
-nothing is executed against the Graph API, and the reply says so. The dashboard
-reads fixtures, not live insights. Campaign/ad set/ad writes, winning-ad
-marking, real-time refresh and auth flows beyond the env token are all
-follow-up work.
+The agent has no LLM behind it yet. Apart from campaign listings, which execute,
+`respondToMessage` parses the request into a structured intent and answers with
+the plan of API calls it _would_ run — nothing else is executed against the Graph
+API, and the reply says so. Listings at ad set and ad level are planned but not
+executed. The dashboard reads fixtures, not live insights. Campaign/ad set/ad
+writes, winning-ad marking, real-time refresh and auth flows beyond the env token
+are all follow-up work.

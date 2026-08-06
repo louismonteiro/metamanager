@@ -12,6 +12,7 @@ import type { SendMessageResult } from "@/app/chat/actions";
 
 /** Straight from the roadmap's list of requests the product must serve. */
 export const SUGGESTIONS = [
+  "Que campanhas tenho criadas?",
   "Cria uma campanha de leads com €50/dia para Lisboa e Porto, mulheres 25-45.",
   "Duplica a campanha Black Friday com orçamento de €80/dia e tudo pausado.",
   "Quais anúncios têm CPC acima de €2? Pausa-os.",
@@ -101,8 +102,9 @@ export function ChatPanel({ sendMessage }: ChatPanelProps) {
         {messages.length === 0 && !isSending ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
             <p className="text-muted-foreground max-w-md text-sm">
-              Pede em linguagem natural. O agente responde com a intenção que
-              leu e o plano de chamadas à Meta Marketing API — e nada é
+              Pede em linguagem natural. As leituras (por exemplo: que campanhas
+              tenho?) são respondidas com dados reais da conta; as escritas
+              ficam em plano de chamadas à Meta Marketing API — e nada é
               executado sem a tua confirmação.
             </p>
             <ul className="flex flex-wrap justify-center gap-2">
@@ -164,8 +166,8 @@ export function ChatPanel({ sendMessage }: ChatPanelProps) {
         />
         <div className="flex items-center justify-between gap-3">
           <Badge variant="outline" className="font-normal">
-            Motor de raciocínio ainda não ligado — respostas são planos, não
-            execuções
+            Motor de raciocínio ainda não ligado — leituras executam, escritas
+            ficam em plano
           </Badge>
           <Button type="submit" size="sm" disabled={isSending || !draft.trim()}>
             {isSending ? (
