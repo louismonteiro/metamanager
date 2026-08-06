@@ -92,7 +92,7 @@ export function campaignStatusLabel(status: string | undefined): string {
  */
 export function minorUnitsToEur(raw: string | undefined): number | undefined {
   if (raw === undefined || raw === null || raw.trim() === "") return undefined;
-  const parsed = Number.parseInt(raw, 10);
+  const parsed = Number.parseFloat(raw);
   return Number.isFinite(parsed) ? parsed / 100 : undefined;
 }
 
