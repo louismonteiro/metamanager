@@ -5,7 +5,7 @@ Meta Ads creation and management platform.
 MetaManager is **AI-agent-first**: the user never operates the Meta Marketing
 API through forms or wizards. There are exactly two human-facing surfaces — a
 **chat** with an AI agent (the only place actions happen) and a **read-only
-dashboard**. See `docs/roadmap.md` for the product direction.
+dashboard**.
 
 ## Stack
 
