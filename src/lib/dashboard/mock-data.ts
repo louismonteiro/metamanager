@@ -1,3 +1,4 @@
+import { loadRealDashboardSnapshot } from "./real-data";
 import type {
   AdNode,
   AdSetNode,
@@ -310,9 +311,14 @@ export const mockDashboardSnapshot: DashboardSnapshot = {
 /**
  * Loads the dashboard snapshot.
  *
+ * Tries to read real data from the Meta Marketing API first. Falls back to
+ * fixtures when the API is unconfigured or unavailable.
+ *
  * Async on purpose: the signature does not change when this starts reading the
  * Meta API through a 15-minute cache, as the roadmap requires.
  */
 export async function loadDashboardSnapshot(): Promise<DashboardSnapshot> {
+  const real = await loadRealDashboardSnapshot();
+  if (real) return real;
   return mockDashboardSnapshot;
 }

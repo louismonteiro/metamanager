@@ -119,12 +119,84 @@ export type CampaignListing =
   | { status: "no_account"; reason: string }
   | { status: "error"; message: string; code?: number };
 
+/** One ad set as the chat presents it. Budgets are already in EUR. */
+export interface AdSetSummary {
+  id: string;
+  name: string;
+  /** Raw Graph state, e.g. `ACTIVE`. */
+  status: string;
+  /** Portuguese label for {@link status}. */
+  statusLabel: string;
+  /** Delivery state, when it differs from the configured one. */
+  effectiveStatus?: string;
+  campaignId?: string;
+  dailyBudgetEur?: number;
+  lifetimeBudgetEur?: number;
+  budgetLabel?: "diário" | "vitalício" | undefined;
+  optimizationGoal?: string;
+  billingEvent?: string;
+  geoLocations?: string;
+  ageMin?: number;
+  ageMax?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+export type AdSetListing =
+  | {
+      status: "ok";
+      accountId: string;
+      accountName: string;
+      campaignId?: string;
+      adSets: AdSetSummary[];
+      totalCount: number;
+      hasMore: boolean;
+    }
+  | { status: "unconfigured"; reason: string }
+  | { status: "no_account"; reason: string }
+  | { status: "error"; message: string; code?: number };
+
+/** One ad as the chat presents it. */
+export interface AdSummary {
+  id: string;
+  name: string;
+  /** Raw Graph state, e.g. `ACTIVE`. */
+  status: string;
+  /** Portuguese label for {@link status}. */
+  statusLabel: string;
+  /** Delivery state, when it differs from the configured one. */
+  effectiveStatus?: string;
+  adSetId?: string;
+  campaignId?: string;
+  creativeBody?: string;
+  creativeHeadline?: string;
+  creativeImageUrl?: string;
+  creativeVideoUrl?: string;
+  creativeLinkUrl?: string;
+  previewUrl?: string;
+}
+
+export type AdListing =
+  | {
+      status: "ok";
+      accountId: string;
+      accountName: string;
+      campaignId?: string;
+      adSetId?: string;
+      ads: AdSummary[];
+      totalCount: number;
+      hasMore: boolean;
+    }
+  | { status: "unconfigured"; reason: string }
+  | { status: "no_account"; reason: string }
+  | { status: "error"; message: string; code?: number };
+
 export interface AgentReply {
   message: ChatMessage;
   intent: ParsedIntent;
   plan: AgentPlan;
   /** Present when the request was a listing the agent could execute. */
-  listing?: CampaignListing;
+  listing?: CampaignListing | AdSetListing | AdListing;
   /**
    * `placeholder` when the plan is derived from deterministic parsing and
    * nothing ran; `meta-api` when the answer carries data actually read from the

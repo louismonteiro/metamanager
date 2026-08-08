@@ -187,11 +187,20 @@ function planSteps(intent: ParsedIntent): StepDraft[] {
     case "list": {
       const steps: StepDraft[] = [
         {
-          summary: `Listar as ${plural} da conta com estado e orçamento`,
+          summary: `Listar as ${plural} da conta com estado e ${level === "adset" ? "orçamento" : level === "campaign" ? "orçamento" : "criativo"}`,
           method: "GET",
-          endpoint: `${ACCOUNT}/${LEVEL_EDGE[level]}?fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget`,
+          endpoint: `${ACCOUNT}/${LEVEL_EDGE[level]}?fields=id,name,status,effective_status${
+            level === "campaign"
+              ? ",objective,daily_budget,lifetime_budget"
+              : level === "adset"
+                ? ",daily_budget,lifetime_budget,optimization_goal,billing_event,targeting,start_time,end_time"
+                : ",creative,preview_url"
+          }`,
           dryRun: false,
-          note: "Orçamentos vêm em cêntimos (menor unidade da moeda da conta).",
+          note:
+            level === "campaign" || level === "adset"
+              ? "Orçamentos vêm em cêntimos (menor unidade da moeda da conta)."
+              : "O criativo inclui texto, imagem/vídeo e link.",
         },
       ];
 
@@ -245,11 +254,6 @@ function buildWarnings(intent: ParsedIntent): string[] {
   if (intent.level === "unknown" && intent.action !== "unknown") {
     warnings.push(
       "O nível do objeto (campanha, ad set ou anúncio) não ficou explícito — vou assumir campanha.",
-    );
-  }
-  if (intent.action === "list" && intent.level !== "campaign") {
-    warnings.push(
-      "A leitura em direto está ligada apenas ao nível de campanha — para os outros níveis proponho o plano de chamadas, sem o executar.",
     );
   }
   if (intent.targetingHints.length > 0) {

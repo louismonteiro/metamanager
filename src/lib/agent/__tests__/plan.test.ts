@@ -121,8 +121,12 @@ describe("buildPlan — listing", () => {
     expect(endpoints).not.toContain("insights?level=campaign");
   });
 
-  it("warns that only campaigns are read live", () => {
-    expect(planFor("Lista os meus anúncios").warnings.join(" ")).toContain(
+  it("does not warn about listing limitations", () => {
+    // All levels (campaigns, ad sets, ads) are now supported for live listing.
+    expect(planFor("Lista os meus anúncios").warnings.join(" ")).not.toContain(
+      "apenas ao nível de campanha",
+    );
+    expect(planFor("Lista os meus ad sets").warnings.join(" ")).not.toContain(
       "apenas ao nível de campanha",
     );
     expect(
