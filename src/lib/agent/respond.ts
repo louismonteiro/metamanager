@@ -392,9 +392,9 @@ export function renderReply(
   // A listing request is answered with the answer first: the plan behind it is
   // supporting detail, not the deliverable.
   const listingLines = listing
-    ? listing.status === "ok" && intent.level === "adset"
+    ? intent.level === "adset"
       ? describeAdSetListing(listing as AdSetListing)
-      : listing.status === "ok" && intent.level === "ad"
+      : intent.level === "ad"
         ? describeAdListing(listing as AdListing)
         : describeListing(listing as CampaignListing)
     : [];
