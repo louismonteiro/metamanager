@@ -16,6 +16,7 @@ import type {
   AdNode,
   DashboardSnapshot,
   MetricSet,
+  DeliveryStatus,
 } from "./types";
 
 /**
@@ -193,5 +194,3 @@ function sumMetrics(
     costPerResultEur: results > 0 ? spendEur / results : 0,
   };
 }
-
-type DeliveryStatus = "ACTIVE" | "PAUSED" | "ARCHIVED" | "IN_REVIEW";
