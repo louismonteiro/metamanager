@@ -51,13 +51,13 @@ header, never in the query string.
 
 ## Surfaces
 
-| Route             | What it is                                                                                           |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `/chat`           | Message history, composer and loading state. Calls the `sendMessage` server action                   |
-| `/dashboard`      | Read-only: account overview, campaigns → ad sets → ads, spend, leads and conversions. Mock data      |
-| `/health`         | App liveness plus the Meta connection state (token present, accounts reachable, rate-limit headroom) |
-| `POST /api/chat`  | Programmatic twin of the chat server action                                                          |
-| `GET /api/health` | The health report as JSON. `503` when the Meta probe fails                                           |
+| Route             | What it is                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/chat`           | Message history, composer and loading state. Calls the `sendMessage` server action                                                         |
+| `/dashboard`      | Read-only: account overview, campaigns → ad sets → ads, spend, leads and conversions. Real data when token configured, otherwise mock data |
+| `/health`         | App liveness plus the Meta connection state (token present, accounts reachable, rate-limit headroom)                                       |
+| `POST /api/chat`  | Programmatic twin of the chat server action                                                                                                |
+| `GET /api/health` | The health report as JSON. `503` when the Meta probe fails                                                                                 |
 
 ## Layout
 
@@ -66,9 +66,9 @@ src/
   app/            routes, server actions, API routes
   components/     ui/ (shadcn base), chat/, dashboard/
   lib/
-    meta-api/     typed Meta Marketing API v26.0 client
-    agent/        intent parsing, plan building and campaign listing
-    dashboard/    read-model types and fixtures
+    meta-api/     typed Meta Marketing API v26.0 client (campaigns, ad sets, ads)
+    agent/        intent parsing, plan building and listing for campaigns/ad sets/ads
+    dashboard/    read-model types, fixtures and real-data loader
 ```
 
 ### `src/lib/meta-api/`
@@ -95,7 +95,7 @@ Budgets (`daily_budget`, `lifetime_budget`) come back in the account currency's
 **minor units** — cents — while insights `spend` comes in **major units**. Use
 `minorUnitsToEur` and `majorUnitsToEur` rather than converting inline.
 
-## Reading campaigns from the chat
+## Reading campaigns, ad sets and ads from the chat
 
 Generic Portuguese listing questions — "Que campanhas tenho criadas?", "Lista as
 minhas campanhas", "Quantas campanhas tenho?" — parse to `action: "list"` and are
@@ -104,15 +104,19 @@ total count. The Graph calls run server-side only, so the token never reaches th
 browser. Spend is read from a separate `insights` call, so losing it costs the
 column and not the listing.
 
+The same listing flow works for ad sets and ads: "Lista os meus ad sets",
+"Mostra os anúncios desta campanha", "Que anúncios tenho?" return real inventory
+with status, budget (ad sets), targeting summary (ad sets), creative preview
+(ads) and delivery state.
+
 A phrasing that names a metric ("mostra o CPA das campanhas") stays a `report`:
 it asks for numbers, not for inventory.
 
 ## What this slice does not do
 
-The agent has no LLM behind it yet. Apart from campaign listings, which execute,
-`respondToMessage` parses the request into a structured intent and answers with
-the plan of API calls it _would_ run — nothing else is executed against the Graph
-API, and the reply says so. Listings at ad set and ad level are planned but not
-executed. The dashboard reads fixtures, not live insights. Campaign/ad set/ad
-writes, winning-ad marking, real-time refresh and auth flows beyond the env token
-are all follow-up work.
+The agent has no LLM behind it yet. `respondToMessage` parses the request into a
+structured intent and answers with the plan of API calls it _would_ run for
+write operations — nothing else is executed against the Graph API, and the reply
+says so. The dashboard reads fixtures, not live insights. Campaign/ad set/ad
+writes, winning-ad marking, real-time refresh and auth flows beyond the env
+token are all follow-up work.

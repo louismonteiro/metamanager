@@ -65,6 +65,43 @@ export {
 } from "./resources/ad-accounts";
 
 export {
+  ADSET_FIELDS,
+  ADSET_STATUS,
+  adSetStatusLabel,
+  adSetsEdge,
+  adSetPath,
+  listAdSets,
+  listAllAdSets,
+  getAdSet,
+  summarizeTargeting,
+  formatAdSetBudget,
+  type AdSet,
+  type AdSetStatus,
+  type ListAdSetsOptions,
+  type TargetingSummary,
+} from "./resources/adsets";
+
+export {
+  AD_FIELDS,
+  AD_STATUS,
+  adStatusLabel,
+  adsEdge,
+  adsByAdSetEdge,
+  adsByCampaignEdge,
+  adPath,
+  listAds,
+  listAdsByAdSet,
+  listAdsByCampaign,
+  listAllAds,
+  getAd,
+  summarizeCreative,
+  type Ad,
+  type AdStatus,
+  type CreativeSummary,
+  type ListAdsOptions,
+} from "./resources/ads";
+
+export {
   CAMPAIGN_FIELDS,
   CAMPAIGN_SPEND_FIELDS,
   campaignInsightsEdge,

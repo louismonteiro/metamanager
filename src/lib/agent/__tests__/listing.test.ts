@@ -318,17 +318,34 @@ describe("respondToMessage — campaign listing", () => {
     expect(reply.message.content).toContain("META_ACCESS_TOKEN");
   });
 
-  it("plans without executing for a listing at another level", async () => {
+  const ADS_OK: Route = {
+    match: "/ads",
+    body: {
+      data: [
+        {
+          id: "23851001",
+          name: "Anúncio Janeiro",
+          status: "ACTIVE",
+          effective_status: "ACTIVE",
+          adset_id: "238510",
+          campaign_id: "23851",
+        },
+      ],
+    },
+  };
+
+  it("executes the listing for ads", async () => {
     const reply = await respondToMessage("Lista os meus anúncios", {
       env: ENV,
       clientOptions: {
-        fetchImpl: graphFetch([]),
+        fetchImpl: graphFetch([ACCOUNTS_OK, ADS_OK]),
       },
     });
 
     expect(reply.intent.action).toBe("list");
     expect(reply.intent.level).toBe("ad");
-    expect(reply.listing).toBeUndefined();
+    expect(reply.listing).toBeDefined();
+    expect(reply.listing?.status).toBe("ok");
     expect(
       reply.plan.steps.some((step) => step.endpoint.includes("/ads")),
     ).toBe(true);
